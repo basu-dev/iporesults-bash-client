@@ -1,0 +1,34 @@
+#!/bin/bash
+
+
+boidfile=~/.secrets/.boid.txt
+
+function showTitle(){
+echo ""
+echo " ================== $1  ================="
+echo ""
+}
+
+function result(){
+
+curl -4 -s 'https://iporesult.cdsc.com.np/result/result/check' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Content-Type: application/json' \
+  --data-raw '{"companyShareId":"'$id'","boid":"'$1'"}' \
+  --compressed | jq .message
+}
+
+
+showTitle "All IPOS"
+totalIpos=$(curl -4 -s 'https://iporesult.cdsc.com.np/result/companyShares/fileUploaded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --compressed  | jq .body[])
+echo $totalIpos | jq . 
+	read -p "Select Company Id : " id
+	while read line;do
+		name=$(echo $line | awk '{print $1}')
+		boid=$(echo $line | awk '{print $2}')
+		showTitle $name
+		result $boid
+	done < $boidfile
+echo ""
