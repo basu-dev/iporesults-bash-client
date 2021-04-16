@@ -40,6 +40,8 @@ Save the file and after you launch the terminal and type iporesultsit will give 
 ```
 iporesults
 ```
+### Output Demo
+<img src="./images/ipo.png">
 
 ### Future Improvement
 I will add a feature of adding the name and boid with command line in stead of editing the ~/.secrets/.boid.txt file yourself as following :
@@ -50,7 +52,6 @@ And to remove the family member
 ```
 iporesults remove Phillips
 ```
-
 I will try to make AUR package for arch users.
 
 
