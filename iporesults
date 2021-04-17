@@ -1,34 +1,41 @@
 #!/bin/bash
 
+# Written By Basu Dev Adhikari
 
 boidfile=~/.secrets/.boid.txt
 
 function showTitle(){
-echo ""
-echo " ================== $1  ================="
-echo ""
+	echo ""
+	echo " ========== $1 =========="
+	echo ""
+}
+networkError(){
+	echo -e "\033[31m Network Problem\033[0m"
+	exit 1
 }
 
 function result(){
-
-curl -4 -s 'https://iporesult.cdsc.com.np/result/result/check' \
-  -H 'Accept: application/json, text/plain, */*' \
-  -H 'Content-Type: application/json' \
-  --data-raw '{"companyShareId":"'$id'","boid":"'$1'"}' \
-  --compressed | jq .message
+	local msg=$(curl -4 -s 'https://iporesult.cdsc.com.np/result/result/check' \
+		-H 'Content-Type: application/json'\
+  		--data-raw '{"companyShareId":"'$id'","boid":"'$1'"}' \
+  		--compressed | jq .message)
+	[[ ${#msg} == 0 ]] && networkError
+	[[ "$msg" =~ "Sorry" ]] &&
+	(showTitle $2 && echo -e "\033[31m         Not alloted\033[0m") ||
+	(showTitle $2 && echo -e "\033[32m           Alloted \033[0m")
 }
 
 
-showTitle "All IPOS"
 totalIpos=$(curl -4 -s 'https://iporesult.cdsc.com.np/result/companyShares/fileUploaded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --compressed  | jq .body[])
+	 --compressed  | jq .body[])
+[[ "${#totalIpos}" == 0 ]] && networkError
+
+showTitle "All IPOS"
 echo $totalIpos | jq . 
-	read -p "Select Company Id : " id
-	while read line;do
-		name=$(echo $line | awk '{print $1}')
-		boid=$(echo $line | awk '{print $2}')
-		showTitle $name
-		result $boid
-	done < $boidfile
+read -p "Select Company Id : " id
+while read line;do
+	name=$(echo $line | awk '{print $1}')
+	boid=$(echo $line | awk '{print $2}')
+	result $boid $name & 
+done < $boidfile
 echo ""
