@@ -4,7 +4,7 @@
 
 boidfile=~/.secrets/.boid.txt
 
-function showTitle(){
+showTitle(){
 	echo ""
 	echo " ========== $1 =========="
 	echo ""
@@ -14,7 +14,7 @@ networkError(){
 	exit 1
 }
 
-function result(){
+result(){
 	local msg=$(curl -4 -s 'https://iporesult.cdsc.com.np/result/result/check' \
 		-H 'Content-Type: application/json'\
   		--data-raw '{"companyShareId":"'$id'","boid":"'$1'"}' \
@@ -24,18 +24,23 @@ function result(){
 	(showTitle $2 && echo -e "\033[31m         Not alloted\033[0m") ||
 	(showTitle $2 && echo -e "\033[32m           Alloted \033[0m")
 }
-
-
 totalIpos=$(curl -4 -s 'https://iporesult.cdsc.com.np/result/companyShares/fileUploaded' \
-	 --compressed  | jq .body[])
+	 --compressed  | jq .body[] | jq '{id:.id,name:.name}')
 [[ "${#totalIpos}" == 0 ]] && networkError
 
 showTitle "All IPOS"
-echo $totalIpos | jq . 
+echo $totalIpos | jq  
 read -p "Select Company Id : " id
+
+[ ${#id} == 0 ] && read -p "Select Valid Company Id : " id && [ ${#id} == 0 ] && 
+	echo "Invalid Company Id. Exiting Command " && exit 1
 while read line;do
 	name=$(echo $line | awk '{print $1}')
 	boid=$(echo $line | awk '{print $2}')
 	result $boid $name & 
 done < $boidfile
 echo ""
+curl -4 -s 'http://localhost:500/result' \
+		-H 'Content-Type: application/json'\
+  		--data-raw '{"companyShareId":"'$id'","boid":"'$1'"}' \
+  		--compressed | jq .message
